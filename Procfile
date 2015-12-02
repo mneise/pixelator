@@ -1,1 +1,1 @@
-web: lein do clean, cljsbuild once min, run -m pixelator.core
+web: lein trampoline run -m pixelator.core
