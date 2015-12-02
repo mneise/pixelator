@@ -58,4 +58,5 @@ pom.xml.asc
 
 figwheel_server.log
 resources/public/images
-resources/public/js
+resources/public/js/out
+resources/public/js/release
