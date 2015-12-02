@@ -1,1 +1,1 @@
-web: lein trampoline run -m pixelator.core
+web: java -jar target/pixelator.jar
