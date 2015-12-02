@@ -42,4 +42,5 @@
              :css-dirs ["resources/public/css"]
              :ring-handler pixelator.core/app}
   :auto-clean false
+  :min-lein-version "2.0.0"
   :aliases {"stand-alone" ["do" "clean" ["cljsbuild" "once" "min"] "uberjar"]})
