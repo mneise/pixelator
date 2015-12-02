@@ -31,39 +31,42 @@
 
 (defn handle-upload [{:keys [filename tempfile] :as upload-file} block-size]
   (if (and tempfile filename (not (str/blank? filename)))
-    (let [resource-path (str "images/" (digest/sha-256 (str tempfile block-size)) ".png")
-          dest-path (str "resources/public/" resource-path)
-          img (core/load-image tempfile)
-          width (core/width img)
-          height (core/height img)
-          block-size (or (when (and block-size (not (str/blank? block-size)))
-                           (read-string block-size))
-                         default-block-size)]
-      (when (> block-size 0)
-        (loop [x 0
-               y 0]
-          (let [x-end (if (> (+ x block-size) width) width (+ x block-size))
-                y-end (if (> (+ y block-size) height) height (+ y block-size))
-                idxs (cart [(range x x-end) (range y y-end)])
-                pixels (->> idxs
-                            (map #(core/get-pixel img (first %) (second %)))
-                            (map colours/components-rgb))
-                rgbs (partition (count pixels) (apply interleave pixels))
-                average (map #(/ (apply + %) (count pixels)) rgbs)]
-            (doseq [idx idxs]
-              (core/set-pixel img (first idx) (second idx) (colours/rgb-from-components (nth average 0)
-                                                                                        (nth average 1)
-                                                                                        (nth average 2))))
-            (if (and (< x-end width) (< y-end height))
-              (recur x-end y)
-              (if (and (= x-end width) (< y-end height))
-                (recur 0 (+ y-end))
-                (if (and (< x-end width) (= y-end height))
+    (let [extension (str/lower-case (last (str/split filename #"\.")))]
+      (if (contains? #{"png" "jpg" "jpeg"} extension)
+        (let [resource-path (str "results/" (digest/sha-256 (str tempfile block-size)) ".png")
+              dest-path (str "resources/public/" resource-path)
+              img (core/load-image tempfile)
+              width (core/width img)
+              height (core/height img)
+              block-size (or (when (and block-size (not (str/blank? block-size)))
+                               (read-string block-size))
+                             default-block-size)]
+          (when (> block-size 0)
+            (loop [x 0
+                   y 0]
+              (let [x-end (if (> (+ x block-size) width) width (+ x block-size))
+                    y-end (if (> (+ y block-size) height) height (+ y block-size))
+                    idxs (cart [(range x x-end) (range y y-end)])
+                    pixels (->> idxs
+                                (map #(core/get-pixel img (first %) (second %)))
+                                (map colours/components-rgb))
+                    rgbs (partition (count pixels) (apply interleave pixels))
+                    average (map #(/ (apply + %) (count pixels)) rgbs)]
+                (doseq [idx idxs]
+                  (core/set-pixel img (first idx) (second idx) (colours/rgb-from-components (nth average 0)
+                                                                                            (nth average 1)
+                                                                                            (nth average 2))))
+                (if (and (< x-end width) (< y-end height))
                   (recur x-end y)
-                  img))))))
-      (core/save img dest-path)
-      (make-response 200 {:status "OK"
-                          :tempfile resource-path}))
+                  (if (and (= x-end width) (< y-end height))
+                    (recur 0 (+ y-end))
+                    (if (and (< x-end width) (= y-end height))
+                      (recur x-end y)
+                      img))))))
+          (core/save img dest-path)
+          (make-response 200 {:status "OK"
+                              :tempfile resource-path}))
+        (make-response 400 {:status "Extension not supported"})))
     (make-response 400 {:status "No file"})))
 
 (defroutes routes

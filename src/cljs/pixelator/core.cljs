@@ -6,13 +6,19 @@
 
 (enable-console-print!)
 
-(defn on-success [response]
+(defn remove-old-image []
+  (when-let [old-img (gdom/getElement "pixel-image")]
+    (gdom/removeNode old-img)))
+
+(defn replace-image [src]
   (let [app (gdom/getElement "app")
-        new-img (gdom/createDom "img" #js {:src (aget response "tempfile")
+        new-img (gdom/createDom "img" #js {:src src
                                            :id "pixel-image"})]
-    (when-let [old-img (gdom/getElement "pixel-image")]
-      (gdom/removeNode old-img))
+    (remove-old-image)
     (gdom/append app new-img)))
+
+(defn on-success [response]
+  (replace-image (aget response "tempfile")))
 
 (defn upload-file []
   (let [el (gdom/getElement "upload-form")
@@ -20,10 +26,13 @@
     (events/listen iframe EventType.COMPLETE
                    (fn [event]
                      (let [response (.getResponseJson iframe)]
-                       (when (= (aget response "status") "OK")
-                         (on-success response)))
+                       (if (= (aget response "status") "OK")
+                         (on-success response)
+                         (remove-old-image)))
                      (.dispose iframe)))
-    (.sendFromForm iframe el "/upload")))
+    (.sendFromForm iframe el "/upload")
+    (replace-image "images/ajax-loader.gif")))
+
 
 
 (defn create []

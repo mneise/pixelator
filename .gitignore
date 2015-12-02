@@ -57,6 +57,6 @@ pom.xml.asc
 .nrepl-port
 
 figwheel_server.log
-resources/public/images
-resources/public/js/out
-resources/public/js/release
+resources/public/results
+resources/public/js
+
